@@ -25,6 +25,7 @@ export type Database = {
           orange_team_players: string[]
           orange_team_score: number | null
           paid_players: string[]
+          payment_type: string | null
           week_date: string
         }
         Insert: {
@@ -37,6 +38,7 @@ export type Database = {
           orange_team_players?: string[]
           orange_team_score?: number | null
           paid_players?: string[]
+          payment_type?: string | null
           week_date: string
         }
         Update: {
@@ -49,7 +51,35 @@ export type Database = {
           orange_team_players?: string[]
           orange_team_score?: number | null
           paid_players?: string[]
+          payment_type?: string | null
           week_date?: string
+        }
+        Relationships: []
+      }
+      players: {
+        Row: {
+          created_at: string
+          has_paid: boolean
+          id: string
+          is_in: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          has_paid?: boolean
+          id?: string
+          is_in?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          has_paid?: boolean
+          id?: string
+          is_in?: boolean
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }

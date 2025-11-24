@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Users, DollarSign } from 'lucide-react';
+import { Plus, Trash2, Users, Loader2 } from 'lucide-react';
 
 export interface Player {
   id: string;
@@ -15,41 +15,35 @@ export interface Player {
 
 interface PlayerManagerProps {
   players: Player[];
-  onPlayersChange: (players: Player[]) => void;
+  isLoading?: boolean;
+  onAddPlayer: (name: string) => void;
+  onRemovePlayer: (id: string) => void;
+  onUpdatePlayer: (id: string, updates: Partial<Player>) => void;
+  onClearAll: () => void;
 }
 
-export const PlayerManager: React.FC<PlayerManagerProps> = ({ players, onPlayersChange }) => {
+export const PlayerManager: React.FC<PlayerManagerProps> = ({ 
+  players, 
+  isLoading = false,
+  onAddPlayer,
+  onRemovePlayer,
+  onUpdatePlayer,
+  onClearAll
+}) => {
   const [newPlayerName, setNewPlayerName] = useState('');
 
   const addPlayer = () => {
     if (newPlayerName.trim()) {
-      const newPlayer: Player = {
-        id: Date.now().toString(),
-        name: newPlayerName.trim(),
-        isIn: false,
-        hasPaid: false,
-      };
-      onPlayersChange([...players, newPlayer]);
+      onAddPlayer(newPlayerName.trim());
       setNewPlayerName('');
     }
   };
 
-  const removePlayer = (id: string) => {
-    onPlayersChange(players.filter(player => player.id !== id));
-  };
-
   const togglePlayerStatus = (id: string, field: 'isIn' | 'hasPaid') => {
-    onPlayersChange(
-      players.map(player =>
-        player.id === id ? { ...player, [field]: !player[field] } : player
-      )
-    );
-  };
-
-  const clearAll = () => {
-    onPlayersChange(
-      players.map(player => ({ ...player, isIn: false, hasPaid: false }))
-    );
+    const player = players.find(p => p.id === id);
+    if (player) {
+      onUpdatePlayer(id, { [field]: !player[field] });
+    }
   };
 
   // Sort players: attending first, then by name
@@ -61,6 +55,17 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({ players, onPlayers
 
   const attendingPlayers = players.filter(player => player.isIn);
   const paidPlayers = attendingPlayers.filter(player => player.hasPaid);
+
+  if (isLoading) {
+    return (
+      <Card className="w-full">
+        <CardContent className="p-8 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+          <p className="text-muted-foreground">Loading players...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full">
@@ -97,7 +102,7 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({ players, onPlayers
           
           {players.length > 0 && (
             <Button 
-              onClick={clearAll} 
+              onClick={onClearAll} 
               variant="outline" 
               size="sm"
               className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
@@ -140,7 +145,7 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({ players, onPlayers
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => removePlayer(player.id)}
+                  onClick={() => onRemovePlayer(player.id)}
                   className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0 ml-2"
                 >
                   <Trash2 className="h-4 w-4" />

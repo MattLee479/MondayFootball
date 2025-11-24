@@ -14,6 +14,7 @@ interface GameLog {
   orange_team_score: number | null;
   attending_players: string[];
   paid_players: string[];
+  payment_type: string | null;
   created_at: string;
 }
 
@@ -144,7 +145,7 @@ export default function GameHistory() {
               </div>
 
               {/* Game Stats */}
-              <div className="mt-4 pt-4 border-t flex gap-4 text-sm text-muted-foreground">
+              <div className="mt-4 pt-4 border-t flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Users className="h-4 w-4" />
                   <span>{game.attending_players.length} attended</span>
@@ -154,6 +155,11 @@ export default function GameHistory() {
                     {game.paid_players.length}/{game.attending_players.length} paid
                   </Badge>
                 </div>
+                {game.payment_type && (
+                  <Badge variant="secondary" className="text-xs">
+                    {game.payment_type === 'everyone_pays' ? 'Everyone Pays' : 'Loser Pays'}
+                  </Badge>
+                )}
                 {isTie && (
                   <Badge variant="secondary">Tie Game</Badge>
                 )}

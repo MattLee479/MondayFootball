@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { CalendarIcon, Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -37,6 +38,7 @@ export default function SaveGameDialog({
   const [weekDate, setWeekDate] = useState<Date>(new Date());
   const [greenScore, setGreenScore] = useState('');
   const [orangeScore, setOrangeScore] = useState('');
+  const [paymentType, setPaymentType] = useState<'everyone_pays' | 'loser_pays'>('everyone_pays');
 
   const handleSave = async () => {
     if (!greenScore || !orangeScore) {
@@ -60,6 +62,7 @@ export default function SaveGameDialog({
         orange_team_score: parseInt(orangeScore),
         attending_players: attendingPlayers.map(p => p.name),
         paid_players: attendingPlayers.filter(p => p.hasPaid).map(p => p.name),
+        payment_type: paymentType,
       });
 
       if (error) throw error;
@@ -68,6 +71,7 @@ export default function SaveGameDialog({
       setOpen(false);
       setGreenScore('');
       setOrangeScore('');
+      setPaymentType('everyone_pays');
       onSaved?.();
     } catch (error: any) {
       toast.error('Failed to save game');
@@ -159,6 +163,24 @@ export default function SaveGameDialog({
                 {orangeTeam.length} players
               </p>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Payment Type</Label>
+            <RadioGroup value={paymentType} onValueChange={(value) => setPaymentType(value as 'everyone_pays' | 'loser_pays')}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="everyone_pays" id="everyone" />
+                <Label htmlFor="everyone" className="font-normal cursor-pointer">
+                  Everyone Pays
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="loser_pays" id="loser" />
+                <Label htmlFor="loser" className="font-normal cursor-pointer">
+                  Loser Pays
+                </Label>
+              </div>
+            </RadioGroup>
           </div>
 
           <div className="pt-2 space-y-1 text-sm text-muted-foreground">

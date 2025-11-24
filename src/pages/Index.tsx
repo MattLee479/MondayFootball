@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { PlayerManager, Player } from '@/components/PlayerManager';
+import { PlayerManager } from '@/components/PlayerManager';
+import { usePlayers } from '@/hooks/usePlayers';
 import { TeamSelector } from '@/components/TeamSelector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,13 +12,22 @@ import AppHeader from '@/components/AppHeader';
 import GameHistory from '@/components/GameHistory';
 import SaveGameDialog from '@/components/SaveGameDialog';
 import type { User, Session } from '@supabase/supabase-js';
+import type { Player } from '@/hooks/usePlayers';
 
 const Index = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const { 
+    players, 
+    isLoading: playersLoading,
+    addPlayer,
+    removePlayer,
+    updatePlayer,
+    clearAllSelections,
+    reloadPlayers
+  } = usePlayers();
   const [teams, setTeams] = useState<{ teamA: Player[]; teamB: Player[] }>({
     teamA: [],
     teamB: []
@@ -51,23 +61,6 @@ const Index = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
-
-  // Load data from localStorage on mount
-  useEffect(() => {
-    if (user) {
-      const savedPlayers = localStorage.getItem('football-players');
-      if (savedPlayers) {
-        setPlayers(JSON.parse(savedPlayers));
-      }
-    }
-  }, [user]);
-
-  // Save players to localStorage when they change
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem('football-players', JSON.stringify(players));
-    }
-  }, [players, user]);
 
   const attendingPlayers = players.filter(player => player.isIn);
   const paidPlayers = attendingPlayers.filter(player => player.hasPaid);
@@ -174,8 +167,12 @@ const Index = () => {
           
           <TabsContent value="players" className="space-y-4">
             <PlayerManager 
-              players={players} 
-              onPlayersChange={setPlayers}
+              players={players}
+              isLoading={playersLoading}
+              onAddPlayer={addPlayer}
+              onRemovePlayer={removePlayer}
+              onUpdatePlayer={updatePlayer}
+              onClearAll={clearAllSelections}
             />
           </TabsContent>
           
@@ -191,6 +188,7 @@ const Index = () => {
                 greenTeam={teams.teamA}
                 orangeTeam={teams.teamB}
                 attendingPlayers={attendingPlayers}
+                onSaved={reloadPlayers}
               />
             )}
           </TabsContent>
