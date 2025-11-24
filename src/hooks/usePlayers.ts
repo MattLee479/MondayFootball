@@ -13,6 +13,23 @@ export function usePlayers() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Verify Supabase configuration on mount
+  useEffect(() => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    
+    console.log('Supabase Configuration Check:', {
+      url: supabaseUrl,
+      hasKey: !!supabaseKey,
+      keyLength: supabaseKey?.length || 0
+    });
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('CRITICAL: Missing Supabase environment variables!');
+      toast.error('Configuration error. Please check environment variables.');
+    }
+  }, []);
+
   // Load players from Supabase
   useEffect(() => {
     loadPlayers();
@@ -45,13 +62,23 @@ export function usePlayers() {
 
   const addPlayer = async (name: string) => {
     try {
+      // Ensure we have a valid session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error('Not authenticated. Please log in again.');
+      }
+
       const { data, error } = await supabase
         .from('players')
         .insert({ name, is_in: false, has_paid: false })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase insert error:', error);
+        throw error;
+      }
 
       const newPlayer: Player = {
         id: data.id,
@@ -63,30 +90,47 @@ export function usePlayers() {
       setPlayers(prev => [...prev, newPlayer]);
       toast.success('Player added');
     } catch (error: any) {
-      toast.error('Failed to add player');
-      console.error(error);
+      console.error('Add player error details:', error);
+      toast.error(error.message || 'Failed to add player');
     }
   };
 
   const removePlayer = async (id: string) => {
     try {
+      // Ensure we have a valid session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error('Not authenticated. Please log in again.');
+      }
+
       const { error } = await supabase
         .from('players')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase delete error:', error);
+        throw error;
+      }
 
       setPlayers(prev => prev.filter(p => p.id !== id));
       toast.success('Player removed');
     } catch (error: any) {
-      toast.error('Failed to remove player');
-      console.error(error);
+      console.error('Remove player error details:', error);
+      toast.error(error.message || 'Failed to remove player');
     }
   };
 
   const updatePlayer = async (id: string, updates: Partial<Player>) => {
     try {
+      // Ensure we have a valid session before updating
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error('Not authenticated. Please log in again.');
+      }
+
       const dbUpdates: any = {};
       if ('isIn' in updates) dbUpdates.is_in = updates.isIn;
       if ('hasPaid' in updates) dbUpdates.has_paid = updates.hasPaid;
@@ -97,33 +141,46 @@ export function usePlayers() {
         .update(dbUpdates)
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
 
       setPlayers(prev =>
         prev.map(p => (p.id === id ? { ...p, ...updates } : p))
       );
     } catch (error: any) {
-      toast.error('Failed to update player');
-      console.error(error);
+      console.error('Update player error details:', error);
+      toast.error(error.message || 'Failed to update player');
     }
   };
 
   const clearAllSelections = async () => {
     try {
+      // Ensure we have a valid session before updating
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error('Not authenticated. Please log in again.');
+      }
+
       const { error } = await supabase
         .from('players')
         .update({ is_in: false, has_paid: false })
         .in('id', players.map(p => p.id));
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase clear all error:', error);
+        throw error;
+      }
 
       setPlayers(prev =>
         prev.map(p => ({ ...p, isIn: false, hasPaid: false }))
       );
       toast.success('All selections cleared');
     } catch (error: any) {
-      toast.error('Failed to clear selections');
-      console.error(error);
+      console.error('Clear selections error details:', error);
+      toast.error(error.message || 'Failed to clear selections');
     }
   };
 
