@@ -1,0 +1,249 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { PlayerManager, Player } from '@/components/PlayerManager';
+import { TeamSelector } from '@/components/TeamSelector';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Users, Trophy, Clock, History } from 'lucide-react';
+import AppHeader from '@/components/AppHeader';
+import GameHistory from '@/components/GameHistory';
+import SaveGameDialog from '@/components/SaveGameDialog';
+import type { User, Session } from '@supabase/supabase-js';
+
+const Index = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [teams, setTeams] = useState<{ teamA: Player[]; teamB: Player[] }>({
+    teamA: [],
+    teamB: []
+  });
+
+  // Auth check
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+        
+        if (!session) {
+          navigate('/auth');
+        }
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+      
+      if (!session) {
+        navigate('/auth');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  // Load data from localStorage on mount
+  useEffect(() => {
+    if (user) {
+      const savedPlayers = localStorage.getItem('football-players');
+      if (savedPlayers) {
+        setPlayers(JSON.parse(savedPlayers));
+      }
+    }
+  }, [user]);
+
+  // Save players to localStorage when they change
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('football-players', JSON.stringify(players));
+    }
+  }, [players, user]);
+
+  const attendingPlayers = players.filter(player => player.isIn);
+  const paidPlayers = attendingPlayers.filter(player => player.hasPaid);
+  const unpaidPlayers = attendingPlayers.filter(player => !player.hasPaid);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <AppHeader />
+      
+      {/* Header */}
+      <div className="bg-gradient-primary text-primary-foreground py-8 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-3 mb-4">
+            <Trophy className="h-8 w-8" />
+            <h1 className="text-4xl font-bold">Monday Night Football</h1>
+          </div>
+          <div className="flex flex-wrap gap-4 text-sm">
+            <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full">
+              <Calendar className="h-4 w-4" />
+              <span>Weekly Session Tracker</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full">
+              <Users className="h-4 w-4" />
+              <span>{attendingPlayers.length} Playing</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full">
+              <Clock className="h-4 w-4" />
+              <span>{paidPlayers.length}/{attendingPlayers.length} Paid</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto p-4 space-y-6">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-success">{attendingPlayers.length}</div>
+              <div className="text-sm text-muted-foreground">Players Attending</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-warning">{paidPlayers.length}</div>
+              <div className="text-sm text-muted-foreground">Players Paid</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-destructive">{unpaidPlayers.length}</div>
+              <div className="text-sm text-muted-foreground">Still Need to Pay</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Payment Status Alert */}
+        {unpaidPlayers.length > 0 && (
+          <Card className="border-warning/20 bg-warning/5">
+            <CardHeader>
+              <CardTitle className="text-warning flex items-center gap-2">
+                <Clock className="h-5 w-5" />
+                Payment Reminder
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-2">
+                Still waiting for payment from:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {unpaidPlayers.map(player => (
+                  <Badge key={player.id} variant="outline" className="border-warning/50 text-warning">
+                    {player.name}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Tabs */}
+        <Tabs defaultValue="players" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="players">Manage Players</TabsTrigger>
+            <TabsTrigger value="teams">Team Selection</TabsTrigger>
+            <TabsTrigger value="history">
+              <History className="h-4 w-4 mr-2" />
+              History
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="players" className="space-y-4">
+            <PlayerManager 
+              players={players} 
+              onPlayersChange={setPlayers}
+            />
+          </TabsContent>
+          
+          <TabsContent value="teams" className="space-y-4">
+            <TeamSelector 
+              availablePlayers={attendingPlayers}
+              onTeamsChange={setTeams}
+            />
+            
+            {/* Save Game Button */}
+            {teams.teamA.length > 0 && teams.teamB.length > 0 && (
+              <SaveGameDialog
+                greenTeam={teams.teamA}
+                orangeTeam={teams.teamB}
+                attendingPlayers={attendingPlayers}
+              />
+            )}
+          </TabsContent>
+          
+          <TabsContent value="history" className="space-y-4">
+            <GameHistory />
+          </TabsContent>
+        </Tabs>
+
+        {/* Current Teams Summary */}
+        {(teams.teamA.length > 0 || teams.teamB.length > 0) && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="h-5 w-5" />
+                Current Teams
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-team-a rounded-full"></div>
+                    <span className="font-medium">Green Team ({teams.teamA.length})</span>
+                  </div>
+                  <div className="pl-6 space-y-1">
+                    {teams.teamA.map(player => (
+                      <div key={player.id} className="text-sm text-muted-foreground">
+                        {player.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-team-b rounded-full"></div>
+                    <span className="font-medium">Orange Team ({teams.teamB.length})</span>
+                  </div>
+                  <div className="pl-6 space-y-1">
+                    {teams.teamB.map(player => (
+                      <div key={player.id} className="text-sm text-muted-foreground">
+                        {player.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Index;
