@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Shuffle, Users, RotateCcw } from 'lucide-react';
+import { Shuffle, Users, RotateCcw, Lock } from 'lucide-react';
 import { Player } from './PlayerManager';
 
 interface Team {
@@ -15,98 +15,125 @@ interface Team {
 
 interface TeamSelectorProps {
   availablePlayers: Player[];
-  onTeamsChange: (teams: { teamA: Player[]; teamB: Player[] }) => void;
+  teams: { teamA: Player[]; teamB: Player[] };
+  teamSize: number;
+  isAdmin: boolean;
+  onTeamsChange: (teams: { teamA: Player[]; teamB: Player[] }, teamSize: number) => void;
+  onClearTeams: () => void;
 }
 
-export const TeamSelector: React.FC<TeamSelectorProps> = ({ availablePlayers, onTeamsChange }) => {
-  const [teamSize, setTeamSize] = useState<string>('7');
+export const TeamSelector: React.FC<TeamSelectorProps> = ({ 
+  availablePlayers, 
+  teams: externalTeams,
+  teamSize: externalTeamSize,
+  isAdmin,
+  onTeamsChange,
+  onClearTeams
+}) => {
+  const [teamSize, setTeamSize] = useState<string>(externalTeamSize.toString());
   const [teams, setTeams] = useState<{ A: Team; B: Team }>({
     A: {
       id: 'A',
       name: 'Green Team',
       color: 'team-a',
-      players: []
+      players: externalTeams.teamA
     },
     B: {
       id: 'B',
       name: 'Orange Team', 
       color: 'team-b',
-      players: []
+      players: externalTeams.teamB
     }
   });
+
+  // Sync with external teams
+  useEffect(() => {
+    setTeams({
+      A: { ...teams.A, players: externalTeams.teamA },
+      B: { ...teams.B, players: externalTeams.teamB }
+    });
+    setTeamSize(externalTeamSize.toString());
+  }, [externalTeams, externalTeamSize]);
 
   const unassignedPlayers = availablePlayers.filter(
     player => !teams.A.players.find(p => p.id === player.id) && 
                !teams.B.players.find(p => p.id === player.id)
   );
 
-  useEffect(() => {
-    onTeamsChange({
-      teamA: teams.A.players,
-      teamB: teams.B.players
-    });
-  }, [teams, onTeamsChange]);
-
   const movePlayerToTeam = (player: Player, targetTeam: 'A' | 'B') => {
-    setTeams(prev => {
-      // Remove player from current team
-      const newTeams = {
-        A: { ...prev.A, players: prev.A.players.filter(p => p.id !== player.id) },
-        B: { ...prev.B, players: prev.B.players.filter(p => p.id !== player.id) }
-      };
-
-      // Add to target team
-      newTeams[targetTeam].players.push(player);
-
-      return newTeams;
-    });
+    if (!isAdmin) return;
+    
+    const newTeams = {
+      A: { ...teams.A, players: teams.A.players.filter(p => p.id !== player.id) },
+      B: { ...teams.B, players: teams.B.players.filter(p => p.id !== player.id) }
+    };
+    newTeams[targetTeam].players.push(player);
+    
+    setTeams(newTeams);
+    onTeamsChange(
+      { teamA: newTeams.A.players, teamB: newTeams.B.players },
+      parseInt(teamSize)
+    );
   };
 
   const removePlayerFromTeam = (player: Player) => {
-    setTeams(prev => ({
-      A: { ...prev.A, players: prev.A.players.filter(p => p.id !== player.id) },
-      B: { ...prev.B, players: prev.B.players.filter(p => p.id !== player.id) }
-    }));
+    if (!isAdmin) return;
+    
+    const newTeams = {
+      A: { ...teams.A, players: teams.A.players.filter(p => p.id !== player.id) },
+      B: { ...teams.B, players: teams.B.players.filter(p => p.id !== player.id) }
+    };
+    
+    setTeams(newTeams);
+    onTeamsChange(
+      { teamA: newTeams.A.players, teamB: newTeams.B.players },
+      parseInt(teamSize)
+    );
   };
 
   const randomizeTeams = () => {
+    if (!isAdmin) return;
+    
     const shuffled = [...availablePlayers].sort(() => Math.random() - 0.5);
     const teamSizeNum = parseInt(teamSize);
     const totalPlayers = availablePlayers.length;
     
-    // Calculate team sizes - try to balance but allow for uneven numbers
     let teamASize = Math.floor(totalPlayers / 2);
     let teamBSize = totalPlayers - teamASize;
     
-    // If we have a preferred team size, try to get close to it
     if (teamSizeNum <= totalPlayers / 2) {
       teamASize = Math.min(teamSizeNum, totalPlayers);
       teamBSize = Math.min(teamSizeNum, totalPlayers - teamASize);
       
-      // If Team B would be too small, redistribute
       if (teamBSize < teamSizeNum - 1 && totalPlayers - teamSizeNum > 0) {
         teamASize = teamSizeNum;
         teamBSize = totalPlayers - teamSizeNum;
       }
     }
 
-    setTeams({
-      A: {
-        ...teams.A,
-        players: shuffled.slice(0, teamASize)
-      },
-      B: {
-        ...teams.B,
-        players: shuffled.slice(teamASize, teamASize + teamBSize)
-      }
-    });
+    const newTeamA = shuffled.slice(0, teamASize);
+    const newTeamB = shuffled.slice(teamASize, teamASize + teamBSize);
+
+    const newTeams = {
+      A: { ...teams.A, players: newTeamA },
+      B: { ...teams.B, players: newTeamB }
+    };
+    
+    setTeams(newTeams);
+    onTeamsChange({ teamA: newTeamA, teamB: newTeamB }, teamSizeNum);
   };
 
-  const clearTeams = () => {
-    setTeams({
-      A: { ...teams.A, players: [] },
-      B: { ...teams.B, players: [] }
-    });
+  const handleClearTeams = () => {
+    if (!isAdmin) return;
+    onClearTeams();
+  };
+
+  const handleTeamSizeChange = (value: string) => {
+    setTeamSize(value);
+    onTeamsChange(
+      { teamA: teams.A.players, teamB: teams.B.players },
+      parseInt(value)
+    );
   };
 
   const teamSizeOptions = [
@@ -121,6 +148,16 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({ availablePlayers, on
 
   return (
     <div className="space-y-6">
+      {/* Admin notice for non-admins */}
+      {!isAdmin && (
+        <Card className="border-warning/20 bg-warning/5">
+          <CardContent className="p-4 flex items-center gap-2">
+            <Lock className="h-5 w-5 text-warning" />
+            <span className="text-sm text-warning">View only - Only admins can modify teams</span>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Controls */}
       <Card>
         <CardHeader>
@@ -133,7 +170,7 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({ availablePlayers, on
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium">Target Team Size:</label>
-              <Select value={teamSize} onValueChange={setTeamSize}>
+              <Select value={teamSize} onValueChange={handleTeamSizeChange} disabled={!isAdmin}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
@@ -147,16 +184,18 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({ availablePlayers, on
               </Select>
             </div>
 
-            <div className="flex gap-2">
-              <Button onClick={randomizeTeams} className="flex items-center gap-2">
-                <Shuffle className="h-4 w-4" />
-                Randomize Teams
-              </Button>
-              <Button variant="outline" onClick={clearTeams} className="flex items-center gap-2">
-                <RotateCcw className="h-4 w-4" />
-                Clear Teams
-              </Button>
-            </div>
+            {isAdmin && (
+              <div className="flex gap-2">
+                <Button onClick={randomizeTeams} className="flex items-center gap-2">
+                  <Shuffle className="h-4 w-4" />
+                  Randomize Teams
+                </Button>
+                <Button variant="outline" onClick={handleClearTeams} className="flex items-center gap-2">
+                  <RotateCcw className="h-4 w-4" />
+                  Clear Teams
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="text-sm text-muted-foreground">
@@ -181,14 +220,16 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({ availablePlayers, on
             {teams.A.players.map(player => (
               <div key={player.id} className="flex items-center justify-between p-2 rounded bg-team-a/5 border border-team-a/20">
                 <span className="font-medium">{player.name}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removePlayerFromTeam(player)}
-                  className="text-team-a hover:bg-team-a/10"
-                >
-                  Remove
-                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removePlayerFromTeam(player)}
+                    className="text-team-a hover:bg-team-a/10"
+                  >
+                    Remove
+                  </Button>
+                )}
               </div>
             ))}
             {teams.A.players.length === 0 && (
@@ -213,14 +254,16 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({ availablePlayers, on
             {teams.B.players.map(player => (
               <div key={player.id} className="flex items-center justify-between p-2 rounded bg-team-b/5 border border-team-b/20">
                 <span className="font-medium">{player.name}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removePlayerFromTeam(player)}
-                  className="text-team-b hover:bg-team-b/10"
-                >
-                  Remove
-                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removePlayerFromTeam(player)}
+                    className="text-team-b hover:bg-team-b/10"
+                  >
+                    Remove
+                  </Button>
+                )}
               </div>
             ))}
             {teams.B.players.length === 0 && (
@@ -243,22 +286,24 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({ availablePlayers, on
               {unassignedPlayers.map(player => (
                 <div key={player.id} className="flex items-center justify-between p-3 rounded border">
                   <span className="font-medium">{player.name}</span>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => movePlayerToTeam(player, 'A')}
-                      className="bg-team-a hover:bg-team-a/90 text-team-a-foreground"
-                    >
-                      → Green Team
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => movePlayerToTeam(player, 'B')}
-                      className="bg-team-b hover:bg-team-b/90 text-team-b-foreground"
-                    >
-                      → Orange Team
-                    </Button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => movePlayerToTeam(player, 'A')}
+                        className="bg-team-a hover:bg-team-a/90 text-team-a-foreground"
+                      >
+                        → Green Team
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => movePlayerToTeam(player, 'B')}
+                        className="bg-team-b hover:bg-team-b/90 text-team-b-foreground"
+                      >
+                        → Orange Team
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

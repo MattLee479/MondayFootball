@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      current_teams: {
+        Row: {
+          id: string
+          team_a_player_ids: string[]
+          team_b_player_ids: string[]
+          team_size: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          team_a_player_ids?: string[]
+          team_b_player_ids?: string[]
+          team_size?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          team_a_player_ids?: string[]
+          team_b_player_ids?: string[]
+          team_size?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       game_log: {
         Row: {
           attending_players: string[]

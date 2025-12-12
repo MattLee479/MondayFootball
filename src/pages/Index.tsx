@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { PlayerManager } from '@/components/PlayerManager';
 import { usePlayers } from '@/hooks/usePlayers';
+import { useUserRole } from '@/hooks/useUserRole';
+import { useCurrentTeams } from '@/hooks/useCurrentTeams';
 import { TeamSelector } from '@/components/TeamSelector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Users, Trophy, Clock, History } from 'lucide-react';
+import { Calendar, Users, Trophy, Clock, History, Shield } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import GameHistory from '@/components/GameHistory';
 import SaveGameDialog from '@/components/SaveGameDialog';
@@ -19,6 +21,7 @@ const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { isAdmin, isLoading: roleLoading } = useUserRole();
   const { 
     players, 
     isLoading: playersLoading,
@@ -28,14 +31,12 @@ const Index = () => {
     clearAllSelections,
     reloadPlayers
   } = usePlayers();
-  const [teams, setTeams] = useState<{ teamA: Player[]; teamB: Player[] }>({
-    teamA: [],
-    teamB: []
-  });
+  
+  const attendingPlayers = players.filter(player => player.isIn);
+  const { teams, saveTeams, clearTeams } = useCurrentTeams(attendingPlayers);
 
   // Auth check
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -48,7 +49,6 @@ const Index = () => {
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -62,11 +62,16 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const attendingPlayers = players.filter(player => player.isIn);
+  // Enhanced clear all that also clears teams
+  const handleClearAll = async () => {
+    await clearAllSelections();
+    await clearTeams();
+  };
+
   const paidPlayers = attendingPlayers.filter(player => player.hasPaid);
   const unpaidPlayers = attendingPlayers.filter(player => !player.hasPaid);
 
-  if (isLoading) {
+  if (isLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Loading...</p>
@@ -88,6 +93,12 @@ const Index = () => {
           <div className="flex items-center gap-3 mb-4">
             <Trophy className="h-8 w-8" />
             <h1 className="text-4xl font-bold">Monday Night Football</h1>
+            {isAdmin && (
+              <Badge className="bg-white/20 text-white">
+                <Shield className="h-3 w-3 mr-1" />
+                Admin
+              </Badge>
+            )}
           </div>
           <div className="flex flex-wrap gap-4 text-sm">
             <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full">
@@ -169,21 +180,26 @@ const Index = () => {
             <PlayerManager 
               players={players}
               isLoading={playersLoading}
+              isAdmin={isAdmin}
               onAddPlayer={addPlayer}
               onRemovePlayer={removePlayer}
               onUpdatePlayer={updatePlayer}
-              onClearAll={clearAllSelections}
+              onClearAll={handleClearAll}
             />
           </TabsContent>
           
           <TabsContent value="teams" className="space-y-4">
             <TeamSelector 
               availablePlayers={attendingPlayers}
-              onTeamsChange={setTeams}
+              teams={{ teamA: teams.teamA, teamB: teams.teamB }}
+              teamSize={teams.teamSize}
+              isAdmin={isAdmin}
+              onTeamsChange={saveTeams}
+              onClearTeams={clearTeams}
             />
             
-            {/* Save Game Button */}
-            {teams.teamA.length > 0 && teams.teamB.length > 0 && (
+            {/* Save Game Button - only for admins */}
+            {isAdmin && teams.teamA.length > 0 && teams.teamB.length > 0 && (
               <SaveGameDialog
                 greenTeam={teams.teamA}
                 orangeTeam={teams.teamB}
