@@ -9,9 +9,10 @@ import { TeamSelector } from '@/components/TeamSelector';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Users, Trophy, Clock, History, Shield } from 'lucide-react';
+import { Calendar, Users, Trophy, Clock, History, Shield, Medal } from 'lucide-react';
 import AppHeader from '@/components/AppHeader';
 import GameHistory from '@/components/GameHistory';
+import Leaderboard from '@/components/Leaderboard';
 import SaveGameDialog from '@/components/SaveGameDialog';
 import type { User, Session } from '@supabase/supabase-js';
 import type { Player } from '@/hooks/usePlayers';
@@ -167,12 +168,16 @@ const Index = () => {
 
         {/* Tabs */}
         <Tabs defaultValue="players" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="players">Manage Players</TabsTrigger>
-            <TabsTrigger value="teams">Team Selection</TabsTrigger>
-            <TabsTrigger value="history">
-              <History className="h-4 w-4 mr-2" />
-              History
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="players" className="text-xs sm:text-sm">Players</TabsTrigger>
+            <TabsTrigger value="teams" className="text-xs sm:text-sm">Teams</TabsTrigger>
+            <TabsTrigger value="leaderboard" className="text-xs sm:text-sm">
+              <Medal className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Leaderboard</span>
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-xs sm:text-sm">
+              <History className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">History</span>
             </TabsTrigger>
           </TabsList>
           
@@ -207,6 +212,10 @@ const Index = () => {
                 onSaved={reloadPlayers}
               />
             )}
+          </TabsContent>
+          
+          <TabsContent value="leaderboard" className="space-y-4">
+            <Leaderboard />
           </TabsContent>
           
           <TabsContent value="history" className="space-y-4">

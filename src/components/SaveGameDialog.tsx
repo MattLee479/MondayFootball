@@ -19,6 +19,7 @@ import { CalendarIcon, Save, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface SaveGameDialogProps {
   greenTeam: { id: string; name: string; hasPaid: boolean }[];
@@ -39,10 +40,13 @@ export default function SaveGameDialog({
   const [greenScore, setGreenScore] = useState('');
   const [orangeScore, setOrangeScore] = useState('');
   const [paymentType, setPaymentType] = useState<'everyone_pays' | 'loser_pays'>('everyone_pays');
+  const [scoreUnknown, setScoreUnknown] = useState(false);
+  const [winner, setWinner] = useState<'green' | 'orange' | 'draw'>('green');
 
   const handleSave = async () => {
-    if (!greenScore || !orangeScore) {
-      toast.error('Please enter scores for both teams');
+    // Only require scores if scoreUnknown is false
+    if (!scoreUnknown && (!greenScore || !orangeScore)) {
+      toast.error('Please enter scores for both teams or mark score as unknown');
       return;
     }
 
@@ -58,11 +62,12 @@ export default function SaveGameDialog({
         week_date: format(weekDate, 'yyyy-MM-dd'),
         green_team_players: greenTeam.map(p => p.name),
         orange_team_players: orangeTeam.map(p => p.name),
-        green_team_score: parseInt(greenScore),
-        orange_team_score: parseInt(orangeScore),
+        green_team_score: scoreUnknown ? null : parseInt(greenScore),
+        orange_team_score: scoreUnknown ? null : parseInt(orangeScore),
         attending_players: attendingPlayers.map(p => p.name),
         paid_players: attendingPlayers.filter(p => p.hasPaid).map(p => p.name),
         payment_type: paymentType,
+        winner: scoreUnknown ? winner : undefined, // Only store winner if score unknown
       });
 
       if (error) throw error;
@@ -72,6 +77,8 @@ export default function SaveGameDialog({
       setGreenScore('');
       setOrangeScore('');
       setPaymentType('everyone_pays');
+      setScoreUnknown(false);
+      setWinner('green');
       onSaved?.();
     } catch (error: any) {
       toast.error('Failed to save game');
@@ -123,47 +130,86 @@ export default function SaveGameDialog({
             </Popover>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="green-score">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-team-a rounded-full"></div>
-                  Green Team
-                </div>
-              </Label>
-              <Input
-                id="green-score"
-                type="number"
-                min="0"
-                placeholder="0"
-                value={greenScore}
-                onChange={(e) => setGreenScore(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                {greenTeam.length} players
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="orange-score">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-team-b rounded-full"></div>
-                  Orange Team
-                </div>
-              </Label>
-              <Input
-                id="orange-score"
-                type="number"
-                min="0"
-                placeholder="0"
-                value={orangeScore}
-                onChange={(e) => setOrangeScore(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                {orangeTeam.length} players
-              </p>
-            </div>
+          <div className="flex items-center space-x-2">
+            <Checkbox 
+              id="score-unknown" 
+              checked={scoreUnknown}
+              onCheckedChange={(checked) => setScoreUnknown(checked === true)}
+            />
+            <Label htmlFor="score-unknown" className="font-normal cursor-pointer">
+              Score unknown - just record the winner
+            </Label>
           </div>
+
+          {scoreUnknown ? (
+            <div className="space-y-2">
+              <Label>Who Won?</Label>
+              <RadioGroup value={winner} onValueChange={(value) => setWinner(value as 'green' | 'orange' | 'draw')}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="green" id="winner-green" />
+                  <Label htmlFor="winner-green" className="font-normal cursor-pointer flex items-center gap-2">
+                    <div className="w-3 h-3 bg-team-a rounded-full"></div>
+                    Green Team ({greenTeam.length} players)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="orange" id="winner-orange" />
+                  <Label htmlFor="winner-orange" className="font-normal cursor-pointer flex items-center gap-2">
+                    <div className="w-3 h-3 bg-team-b rounded-full"></div>
+                    Orange Team ({orangeTeam.length} players)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="draw" id="winner-draw" />
+                  <Label htmlFor="winner-draw" className="font-normal cursor-pointer">
+                    Draw
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="green-score">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-team-a rounded-full"></div>
+                    Green Team
+                  </div>
+                </Label>
+                <Input
+                  id="green-score"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={greenScore}
+                  onChange={(e) => setGreenScore(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {greenTeam.length} players
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="orange-score">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-team-b rounded-full"></div>
+                    Orange Team
+                  </div>
+                </Label>
+                <Input
+                  id="orange-score"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={orangeScore}
+                  onChange={(e) => setOrangeScore(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {orangeTeam.length} players
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>Payment Type</Label>

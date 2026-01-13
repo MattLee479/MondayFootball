@@ -54,6 +54,7 @@ export type Database = {
           paid_players: string[]
           payment_type: string | null
           week_date: string
+          winner: string | null
         }
         Insert: {
           attending_players?: string[]
@@ -67,6 +68,7 @@ export type Database = {
           paid_players?: string[]
           payment_type?: string | null
           week_date: string
+          winner?: string | null
         }
         Update: {
           attending_players?: string[]
@@ -80,6 +82,7 @@ export type Database = {
           paid_players?: string[]
           payment_type?: string | null
           week_date?: string
+          winner?: string | null
         }
         Relationships: []
       }
@@ -113,21 +116,18 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
-          email: string | null
           full_name: string | null
           id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          email?: string | null
           full_name?: string | null
           id: string
           updated_at?: string
         }
         Update: {
           created_at?: string
-          email?: string | null
           full_name?: string | null
           id?: string
           updated_at?: string
