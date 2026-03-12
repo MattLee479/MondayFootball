@@ -159,7 +159,7 @@ All colors MUST be HSL.
 
 @layer components {
   .surface-card {
-    @apply rounded-2xl border border-white/45 bg-card/90 shadow-lg backdrop-blur-md;
+    @apply rounded-2xl border border-border/70 bg-card/90 shadow-lg backdrop-blur-md;
   }
 
   .subtle-label {

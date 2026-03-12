@@ -163,7 +163,7 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({
               </div>
 
               {isAdmin && (
-                <div className="flex items-center justify-start gap-4">
+                <div className="flex flex-wrap items-center justify-start gap-4">
                   <div className="flex items-center gap-2">
                     <label className="whitespace-nowrap text-sm text-muted-foreground">In</label>
                     <Switch
@@ -196,4 +196,3 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({
     </Card>
   );
 };
-

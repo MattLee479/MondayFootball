@@ -14,13 +14,11 @@ import AppHeader from '@/components/AppHeader';
 import GameHistory from '@/components/GameHistory';
 import Leaderboard from '@/components/Leaderboard';
 import SaveGameDialog from '@/components/SaveGameDialog';
-import type { User, Session } from '@supabase/supabase-js';
-import type { Player } from '@/hooks/usePlayers';
+import type { User } from '@supabase/supabase-js';
 
 const Index = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { isAdmin, isLoading: roleLoading } = useUserRole();
   const { 
@@ -40,7 +38,6 @@ const Index = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
         
@@ -51,7 +48,6 @@ const Index = () => {
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
       
@@ -94,16 +90,18 @@ const Index = () => {
           <div className="pointer-events-none absolute -bottom-20 -right-16 h-48 w-48 rounded-full bg-team-b/20 blur-2xl" />
 
           <div className="relative flex flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary text-white shadow-team">
-                <Trophy className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="subtle-label">Weekly Match Organizer</p>
-                <h1 className="text-3xl font-extrabold sm:text-4xl">Monday Night Football</h1>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-primary text-white shadow-team">
+                  <Trophy className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="subtle-label">Weekly Match Organizer</p>
+                  <h1 className="text-3xl font-extrabold sm:text-4xl">Monday Night Football</h1>
+                </div>
               </div>
               {isAdmin && (
-                <Badge className="ml-auto bg-primary/15 text-primary border-primary/25">
+                <Badge className="border-primary/25 bg-primary/15 text-primary">
                   <Shield className="mr-1 h-3 w-3" />
                   Admin Access
                 </Badge>
@@ -129,7 +127,7 @@ const Index = () => {
 
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Card className="overflow-hidden">
-            <CardContent className="flex items-center justify-between p-5">
+            <CardContent className="flex min-h-[112px] items-center justify-between p-5">
               <div>
                 <p className="subtle-label">Players In</p>
                 <p className="mt-2 text-3xl font-extrabold text-success">{attendingPlayers.length}</p>
@@ -141,7 +139,7 @@ const Index = () => {
           </Card>
 
           <Card className="overflow-hidden">
-            <CardContent className="flex items-center justify-between p-5">
+            <CardContent className="flex min-h-[112px] items-center justify-between p-5">
               <div>
                 <p className="subtle-label">Paid</p>
                 <p className="mt-2 text-3xl font-extrabold text-warning">{paidPlayers.length}</p>
@@ -153,7 +151,7 @@ const Index = () => {
           </Card>
 
           <Card className="overflow-hidden">
-            <CardContent className="flex items-center justify-between p-5">
+            <CardContent className="flex min-h-[112px] items-center justify-between p-5">
               <div>
                 <p className="subtle-label">Unpaid</p>
                 <p className="mt-2 text-3xl font-extrabold text-destructive">{unpaidPlayers.length}</p>
@@ -187,7 +185,7 @@ const Index = () => {
         )}
 
         <Tabs defaultValue="players" className="w-full">
-          <TabsList className="grid h-auto w-full grid-cols-2 gap-1.5 sm:grid-cols-4">
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:grid-cols-4">
             <TabsTrigger value="players" className="gap-2 py-2.5 text-xs sm:text-sm">
               <Users className="h-4 w-4" />
               Players
@@ -248,8 +246,8 @@ const Index = () => {
         </Tabs>
 
         {(teams.teamA.length > 0 || teams.teamB.length > 0) && (
-          <Card>
-            <CardHeader>
+          <Card className="overflow-hidden">
+            <CardHeader className="border-b border-border/60 bg-secondary/30">
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-primary" />
                 Current Teams

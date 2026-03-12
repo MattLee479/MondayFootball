@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { LogOut, Shield, Trophy } from 'lucide-react';
+import { LogOut, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 
@@ -47,8 +47,7 @@ export default function AppHeader() {
           </div>
         </div>
 
-        <Button variant="outline" onClick={handleLogout} className="gap-2">
-          <Shield className="h-4 w-4" />
+        <Button variant="outline" onClick={handleLogout} className="gap-2 text-xs sm:text-sm">
           <LogOut className="h-4 w-4" />
           Logout
         </Button>

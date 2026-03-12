@@ -202,7 +202,7 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="border-team-a/25">
+        <Card className="border-team-a/25 overflow-hidden">
           <CardHeader className="bg-gradient-team-a text-team-a-foreground">
             <CardTitle className="flex items-center justify-between">
               <span>{teams.A.name}</span>
@@ -211,7 +211,7 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
               </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 p-4">
+          <CardContent className="space-y-2 p-4 min-h-[140px]">
             {teams.A.players.map((player) => (
               <div key={player.id} className="flex items-center justify-between rounded-xl border border-team-a/20 bg-team-a/5 p-2.5">
                 <span className="font-medium">{player.name}</span>
@@ -231,7 +231,7 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
           </CardContent>
         </Card>
 
-        <Card className="border-team-b/25">
+        <Card className="border-team-b/25 overflow-hidden">
           <CardHeader className="bg-gradient-team-b text-team-b-foreground">
             <CardTitle className="flex items-center justify-between">
               <span>{teams.B.name}</span>
@@ -240,7 +240,7 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
               </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 p-4">
+          <CardContent className="space-y-2 p-4 min-h-[140px]">
             {teams.B.players.map((player) => (
               <div key={player.id} className="flex items-center justify-between rounded-xl border border-team-b/20 bg-team-b/5 p-2.5">
                 <span className="font-medium">{player.name}</span>
@@ -272,7 +272,7 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
                 <div key={player.id} className="flex flex-col gap-2 rounded-xl border border-border/70 bg-card/70 p-3 sm:flex-row sm:items-center sm:justify-between">
                   <span className="font-medium">{player.name}</span>
                   {isAdmin && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button size="sm" onClick={() => movePlayerToTeam(player, 'A')} className="bg-team-a text-team-a-foreground hover:bg-team-a/90">
                         -&gt; Green Team
                       </Button>
@@ -290,4 +290,3 @@ export const TeamSelector: React.FC<TeamSelectorProps> = ({
     </div>
   );
 };
-

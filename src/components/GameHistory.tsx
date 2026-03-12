@@ -89,18 +89,18 @@ export default function GameHistory() {
                 </div>
                 {game.green_team_score !== null && game.orange_team_score !== null && (
                   <div className="flex items-center gap-2">
-                    <Badge variant={greenWon ? 'default' : 'outline'} className="px-3 py-1 text-lg">
+                    <Badge variant={greenWon ? 'default' : 'outline'} className="min-w-10 justify-center px-3 py-1 text-lg">
                       {game.green_team_score}
                     </Badge>
                     <span className="text-muted-foreground">-</span>
-                    <Badge variant={orangeWon ? 'default' : 'outline'} className="px-3 py-1 text-lg">
+                    <Badge variant={orangeWon ? 'default' : 'outline'} className="min-w-10 justify-center px-3 py-1 text-lg">
                       {game.orange_team_score}
                     </Badge>
                   </div>
                 )}
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-3 rounded-xl border border-team-a/25 bg-team-a/5 p-4">
                   <div className="flex items-center gap-2">
@@ -165,4 +165,3 @@ export default function GameHistory() {
     </div>
   );
 }
-

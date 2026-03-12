@@ -274,7 +274,7 @@ export default function Leaderboard() {
       {/* Team Win Ratio Card */}
       <Card className="overflow-hidden">
         <CardHeader className="border-b border-border/60 bg-secondary/35">
-          <div className="text-center mb-4">
+          <div className="text-center">
             <h3 className="subtle-label">Team Win Ratio</h3>
             <p className="mt-1 text-sm font-semibold">{teamStats.totalGames} games played</p>
           </div>
@@ -405,15 +405,15 @@ export default function Leaderboard() {
             Players ranked by total wins on the winning team
           </p>
         </CardHeader>
-        <CardContent className="p-0 sm:p-6">
+        <CardContent className="p-4 sm:p-6">
           {/* Mobile-friendly table */}
-          <div className="divide-y divide-border/60">
+          <div className="space-y-2">
             {leaderboard.map((player, index) => {
               const rank = index + 1;
               return (
                 <div
                   key={player.name}
-                  className={`flex items-center justify-between p-4 sm:mb-2 sm:rounded-xl ${getRankBgClass(rank)} ${rank <= 3 ? 'border' : ''}`}
+                  className={`flex items-center justify-between rounded-xl border border-border/60 p-4 ${getRankBgClass(rank)} ${rank <= 3 ? 'border' : ''}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="flex-shrink-0">
