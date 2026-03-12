@@ -23,14 +23,14 @@ interface PlayerManagerProps {
   onClearAll: () => void;
 }
 
-export const PlayerManager: React.FC<PlayerManagerProps> = ({ 
-  players, 
+export const PlayerManager: React.FC<PlayerManagerProps> = ({
+  players,
   isLoading = false,
   isAdmin,
   onAddPlayer,
   onRemovePlayer,
   onUpdatePlayer,
-  onClearAll
+  onClearAll,
 }) => {
   const [newPlayerName, setNewPlayerName] = useState('');
 
@@ -43,27 +43,26 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({
 
   const togglePlayerStatus = (id: string, field: 'isIn' | 'hasPaid') => {
     if (!isAdmin) return;
-    const player = players.find(p => p.id === id);
+    const player = players.find((p) => p.id === id);
     if (player) {
       onUpdatePlayer(id, { [field]: !player[field] });
     }
   };
 
-  // Sort players: attending first, then by name
   const sortedPlayers = [...players].sort((a, b) => {
     if (a.isIn && !b.isIn) return -1;
     if (!a.isIn && b.isIn) return 1;
     return a.name.localeCompare(b.name);
   });
 
-  const attendingPlayers = players.filter(player => player.isIn);
-  const paidPlayers = attendingPlayers.filter(player => player.hasPaid);
+  const attendingPlayers = players.filter((player) => player.isIn);
+  const paidPlayers = attendingPlayers.filter((player) => player.hasPaid);
 
   if (isLoading) {
     return (
       <Card className="w-full">
         <CardContent className="p-8 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
+          <Loader2 className="mx-auto mb-2 h-8 w-8 animate-spin text-primary" />
           <p className="text-muted-foreground">Loading players...</p>
         </CardContent>
       </Card>
@@ -71,33 +70,32 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <Card className="w-full overflow-hidden">
+      <CardHeader className="border-b border-border/60 bg-secondary/35">
         <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
+          <Users className="h-5 w-5 text-primary" />
           Player Roster
         </CardTitle>
-        <div className="flex gap-4 text-sm text-muted-foreground">
+        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
             <Users className="h-4 w-4" />
             {attendingPlayers.length} attending
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-lg">£</span>
+            <span className="font-semibold">GBP</span>
             {paidPlayers.length} paid
           </div>
         </div>
       </CardHeader>
+
       <CardContent className="space-y-4">
-        {/* Admin notice for non-admins */}
         {!isAdmin && (
-          <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
+          <div className="flex items-center gap-2 rounded-xl border border-warning/25 bg-warning/10 p-3">
             <Lock className="h-5 w-5 text-warning" />
             <span className="text-sm text-warning">View only - Only admins can modify players</span>
           </div>
         )}
 
-        {/* Add new player and clear all - only for admins */}
         {isAdmin && (
           <div className="space-y-2">
             <div className="flex gap-2">
@@ -105,19 +103,19 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({
                 placeholder="Enter player name..."
                 value={newPlayerName}
                 onChange={(e) => setNewPlayerName(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
+                onKeyDown={(e) => e.key === 'Enter' && addPlayer()}
               />
-              <Button onClick={addPlayer} size="sm">
+              <Button onClick={addPlayer} size="sm" className="px-4">
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
-            
+
             {players.length > 0 && (
-              <Button 
-                onClick={onClearAll} 
-                variant="outline" 
+              <Button
+                onClick={onClearAll}
+                variant="outline"
                 size="sm"
-                className="w-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
                 Clear All Selections
               </Button>
@@ -125,64 +123,58 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({
           </div>
         )}
 
-        {/* Player list */}
         <div className="space-y-2">
           {sortedPlayers.map((player) => (
             <div
               key={player.id}
-              className={`p-3 rounded-lg border transition-all ${
-                player.isIn 
-                  ? 'bg-success/10 border-success/20' 
-                  : 'bg-card border-border'
+              className={`rounded-xl border p-3 transition-all ${
+                player.isIn
+                  ? 'border-success/25 bg-success/10 shadow-sm'
+                  : 'border-border/70 bg-card/70 hover:bg-secondary/40'
               }`}
             >
-              {/* Player name and badges row */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="font-medium truncate">{player.name}</span>
-                  <div className="flex gap-1 flex-shrink-0">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <span className="truncate font-medium">{player.name}</span>
+                  <div className="flex shrink-0 gap-1">
                     {player.isIn && (
-                      <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-xs">
+                      <Badge variant="outline" className="border-success/25 bg-success/10 text-xs text-success">
                         In
                       </Badge>
                     )}
                     {player.isIn && player.hasPaid && (
-                      <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20 text-xs">
+                      <Badge variant="outline" className="border-warning/25 bg-warning/10 text-xs text-warning">
                         Paid
                       </Badge>
                     )}
                   </div>
                 </div>
-                
-                {/* Remove button - only for admins */}
+
                 {isAdmin && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => onRemovePlayer(player.id)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10 flex-shrink-0 ml-2"
+                    className="ml-2 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 )}
               </div>
 
-              {/* Controls row - only for admins */}
               {isAdmin && (
-                <div className="flex items-center gap-4 justify-start">
-                  {/* Attending toggle */}
+                <div className="flex items-center justify-start gap-4">
                   <div className="flex items-center gap-2">
-                    <label className="text-sm text-muted-foreground whitespace-nowrap">In</label>
+                    <label className="whitespace-nowrap text-sm text-muted-foreground">In</label>
                     <Switch
                       checked={player.isIn}
                       onCheckedChange={() => togglePlayerStatus(player.id, 'isIn')}
                     />
                   </div>
 
-                  {/* Payment toggle - only show if player is attending */}
                   {player.isIn && (
                     <div className="flex items-center gap-2">
-                      <label className="text-sm text-muted-foreground whitespace-nowrap">Paid</label>
+                      <label className="whitespace-nowrap text-sm text-muted-foreground">Paid</label>
                       <Switch
                         checked={player.hasPaid}
                         onCheckedChange={() => togglePlayerStatus(player.id, 'hasPaid')}
@@ -195,7 +187,7 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({
           ))}
 
           {players.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="rounded-xl border border-dashed border-border p-8 text-center text-muted-foreground">
               No players added yet. {isAdmin ? 'Add your first player above!' : 'Waiting for admin to add players.'}
             </div>
           )}
@@ -204,3 +196,4 @@ export const PlayerManager: React.FC<PlayerManagerProps> = ({
     </Card>
   );
 };
+

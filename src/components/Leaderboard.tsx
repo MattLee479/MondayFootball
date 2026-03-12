@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Medal, Crown } from 'lucide-react';
+import { Trophy, Medal, Crown, Flame, TrendingDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PlayerStats {
@@ -19,39 +19,75 @@ interface TeamStats {
   totalGames: number;
 }
 
+interface StreakLeaders {
+  length: number;
+  players: string[];
+}
+
 interface GameLog {
   green_team_players: string[];
   orange_team_players: string[];
   green_team_score: number | null;
   orange_team_score: number | null;
   winner: string | null;
+  week_date: string;
+  created_at: string;
 }
 
 export default function Leaderboard() {
   const [leaderboard, setLeaderboard] = useState<PlayerStats[]>([]);
   const [teamStats, setTeamStats] = useState<TeamStats>({ greenWins: 0, orangeWins: 0, draws: 0, totalGames: 0 });
+  const [winStreakLeaders, setWinStreakLeaders] = useState<StreakLeaders>({ length: 0, players: [] });
+  const [lossStreakLeaders, setLossStreakLeaders] = useState<StreakLeaders>({ length: 0, players: [] });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadLeaderboard();
   }, []);
 
+  const getCurrentStreak = (results: Array<'W' | 'L' | 'D'>, target: 'W' | 'L') => {
+    let streak = 0;
+
+    for (let i = results.length - 1; i >= 0; i--) {
+      if (results[i] !== target) {
+        break;
+      }
+      streak++;
+    }
+
+    return streak;
+  };
+
   const loadLeaderboard = async () => {
     try {
       const { data, error } = await supabase
         .from('game_log')
-        .select('green_team_players, orange_team_players, green_team_score, orange_team_score, winner');
+        .select('green_team_players, orange_team_players, green_team_score, orange_team_score, winner, week_date, created_at')
+        .order('week_date', { ascending: true })
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
 
+      const normalizePlayerName = (name: string) => name.trim().replace(/\s+/g, ' ');
+      const toPlayerKey = (name: string) => normalizePlayerName(name).toLowerCase();
+
       // Calculate wins for each player and team stats
       const playerWins: Record<string, { wins: number; gamesPlayed: number }> = {};
+      const playerOutcomes: Record<string, Array<'W' | 'L' | 'D'>> = {};
+      const playerDisplayNames: Record<string, string> = {};
       let greenWins = 0;
       let orangeWins = 0;
       let draws = 0;
       let totalGames = 0;
 
-      (data as GameLog[] || []).forEach((game) => {
+      const games = ((data as GameLog[]) || []).slice().sort((a, b) => {
+        if (a.week_date !== b.week_date) {
+          return a.week_date.localeCompare(b.week_date);
+        }
+        return a.created_at.localeCompare(b.created_at);
+      });
+
+      games.forEach((game) => {
         let greenWon = false;
         let orangeWon = false;
         let isDraw = false;
@@ -80,33 +116,86 @@ export default function Leaderboard() {
 
         // Count games and wins for green team players
         game.green_team_players.forEach((player) => {
-          if (!playerWins[player]) {
-            playerWins[player] = { wins: 0, gamesPlayed: 0 };
+          const cleanName = normalizePlayerName(player);
+          const key = toPlayerKey(cleanName);
+
+          if (!playerWins[key]) {
+            playerWins[key] = { wins: 0, gamesPlayed: 0 };
           }
-          playerWins[player].gamesPlayed++;
+          if (!playerOutcomes[key]) {
+            playerOutcomes[key] = [];
+          }
+          playerDisplayNames[key] = cleanName;
+
+          playerWins[key].gamesPlayed++;
           if (greenWon) {
-            playerWins[player].wins++;
+            playerWins[key].wins++;
           }
+          playerOutcomes[key].push(greenWon ? 'W' : orangeWon ? 'L' : 'D');
         });
 
         // Count games and wins for orange team players
         game.orange_team_players.forEach((player) => {
-          if (!playerWins[player]) {
-            playerWins[player] = { wins: 0, gamesPlayed: 0 };
+          const cleanName = normalizePlayerName(player);
+          const key = toPlayerKey(cleanName);
+
+          if (!playerWins[key]) {
+            playerWins[key] = { wins: 0, gamesPlayed: 0 };
           }
-          playerWins[player].gamesPlayed++;
+          if (!playerOutcomes[key]) {
+            playerOutcomes[key] = [];
+          }
+          playerDisplayNames[key] = cleanName;
+
+          playerWins[key].gamesPlayed++;
           if (orangeWon) {
-            playerWins[player].wins++;
+            playerWins[key].wins++;
           }
+          playerOutcomes[key].push(orangeWon ? 'W' : greenWon ? 'L' : 'D');
         });
       });
 
       setTeamStats({ greenWins, orangeWins, draws, totalGames });
 
+      let currentWinStreak = 0;
+      let currentLossStreak = 0;
+      let currentWinPlayers: string[] = [];
+      let currentLossPlayers: string[] = [];
+
+      Object.entries(playerOutcomes).forEach(([playerKey, outcomes]) => {
+        const playerCurrentWinStreak = getCurrentStreak(outcomes, 'W');
+        const playerCurrentLossStreak = getCurrentStreak(outcomes, 'L');
+        const displayName = playerDisplayNames[playerKey] || playerKey;
+
+        if (playerCurrentWinStreak > currentWinStreak) {
+          currentWinStreak = playerCurrentWinStreak;
+          currentWinPlayers = playerCurrentWinStreak > 0 ? [displayName] : [];
+        } else if (playerCurrentWinStreak === currentWinStreak && playerCurrentWinStreak > 0) {
+          currentWinPlayers.push(displayName);
+        }
+
+        if (playerCurrentLossStreak > currentLossStreak) {
+          currentLossStreak = playerCurrentLossStreak;
+          currentLossPlayers = playerCurrentLossStreak > 0 ? [displayName] : [];
+        } else if (playerCurrentLossStreak === currentLossStreak && playerCurrentLossStreak > 0) {
+          currentLossPlayers.push(displayName);
+        }
+      });
+
+      setWinStreakLeaders({
+        length: currentWinStreak,
+        players: [...new Set(currentWinPlayers)].sort((a, b) => a.localeCompare(b)),
+      });
+
+      setLossStreakLeaders({
+        length: currentLossStreak,
+        players: [...new Set(currentLossPlayers)].sort((a, b) => a.localeCompare(b)),
+      });
+
       // Convert to array and sort by wins (descending)
       const sortedLeaderboard: PlayerStats[] = Object.entries(playerWins)
-        .map(([name, stats]) => ({
-          name,
+        .map(([playerKey, stats]) => ({
+          name: playerDisplayNames[playerKey] || playerKey,
           wins: stats.wins,
           gamesPlayed: stats.gamesPlayed,
           winRate: stats.gamesPlayed > 0 ? (stats.wins / stats.gamesPlayed) * 100 : 0,
@@ -181,17 +270,18 @@ export default function Leaderboard() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Team Win Ratio Card */}
-      <Card>
-        <CardContent className="p-4 sm:p-6">
+      <Card className="overflow-hidden">
+        <CardHeader className="border-b border-border/60 bg-secondary/35">
           <div className="text-center mb-4">
-            <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Team Win Ratio</h3>
-            <p className="text-xs text-muted-foreground mt-1">{teamStats.totalGames} games played</p>
+            <h3 className="subtle-label">Team Win Ratio</h3>
+            <p className="mt-1 text-sm font-semibold">{teamStats.totalGames} games played</p>
           </div>
-          
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6">
           {/* Win ratio bar */}
-          <div className="relative h-10 sm:h-12 rounded-full overflow-hidden bg-muted flex">
+          <div className="relative flex h-10 overflow-hidden rounded-full bg-muted sm:h-12">
             {greenPercent > 0 && (
               <div 
                 className="bg-team-a flex items-center justify-center transition-all duration-500"
@@ -231,7 +321,7 @@ export default function Leaderboard() {
           </div>
 
           {/* Legend */}
-          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mt-4 text-sm">
+          <div className="mt-4 flex flex-wrap justify-center gap-4 text-sm sm:gap-6">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-team-a"></div>
               <span className="font-medium">Green</span>
@@ -259,9 +349,54 @@ export default function Leaderboard() {
         </CardContent>
       </Card>
 
+      {/* Streak Leaders Card */}
+      <Card>
+        <CardHeader className="border-b border-border/60 bg-secondary/30">
+          <CardTitle className="text-base">Streak Leaders</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Current streaks only. Missed weeks do not break a streak.
+          </p>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border border-success/20 bg-success/5 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Flame className="h-4 w-4 text-success" />
+              <p className="font-medium">Current Win Streak</p>
+            </div>
+            {winStreakLeaders.length > 0 ? (
+              <>
+                <p className="text-sm">{winStreakLeaders.players.join(', ')}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {winStreakLeaders.length} game{winStreakLeaders.length !== 1 ? 's' : ''} in a row
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">No win streak yet</p>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <TrendingDown className="h-4 w-4 text-destructive" />
+              <p className="font-medium">Current Losing Streak</p>
+            </div>
+            {lossStreakLeaders.length > 0 ? (
+              <>
+                <p className="text-sm">{lossStreakLeaders.players.join(', ')}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {lossStreakLeaders.length} game{lossStreakLeaders.length !== 1 ? 's' : ''} in a row
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">No losing streak yet</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Player Leaderboard Card */}
       <Card>
-        <CardHeader>
+        <CardHeader className="border-b border-border/60 bg-secondary/30">
           <CardTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-yellow-500" />
             Player Leaderboard
@@ -272,13 +407,13 @@ export default function Leaderboard() {
         </CardHeader>
         <CardContent className="p-0 sm:p-6">
           {/* Mobile-friendly table */}
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border/60">
             {leaderboard.map((player, index) => {
               const rank = index + 1;
               return (
                 <div
                   key={player.name}
-                  className={`flex items-center justify-between p-4 sm:rounded-lg sm:mb-2 ${getRankBgClass(rank)} ${rank <= 3 ? 'border' : ''}`}
+                  className={`flex items-center justify-between p-4 sm:mb-2 sm:rounded-xl ${getRankBgClass(rank)} ${rank <= 3 ? 'border' : ''}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="flex-shrink-0">

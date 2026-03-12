@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,59 +10,59 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 205 42% 97%;
+    --foreground: 217 39% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 217 39% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 217 39% 15%;
 
-    --primary: 142 76% 36%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 166 74% 31%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 203 37% 92%;
+    --secondary-foreground: 216 33% 18%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 204 30% 94%;
+    --muted-foreground: 215 16% 40%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 28 93% 54%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 1 72% 54%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 204 25% 86%;
+    --input: 204 26% 88%;
+    --ring: 166 74% 31%;
 
     /* Football theme colors */
-    --team-a: 142 76% 36%;
+    --team-a: 166 82% 33%;
     --team-a-foreground: 0 0% 100%;
-    --team-a-light: 142 76% 46%;
+    --team-a-light: 166 76% 43%;
     
-    --team-b: 24 95% 53%;
+    --team-b: 28 93% 54%;
     --team-b-foreground: 0 0% 100%;
-    --team-b-light: 24 95% 63%;
+    --team-b-light: 24 95% 61%;
 
-    --success: 142 76% 36%;
+    --success: 166 82% 33%;
     --success-foreground: 0 0% 100%;
     
-    --warning: 45 93% 47%;
+    --warning: 40 96% 50%;
     --warning-foreground: 0 0% 100%;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--team-a-light)));
-    --gradient-team-a: linear-gradient(135deg, hsl(var(--team-a)), hsl(var(--team-a-light)));
-    --gradient-team-b: linear-gradient(135deg, hsl(var(--team-b)), hsl(var(--team-b-light)));
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(190 76% 36%) 100%);
+    --gradient-team-a: linear-gradient(135deg, hsl(var(--team-a)) 0%, hsl(var(--team-a-light)) 100%);
+    --gradient-team-b: linear-gradient(135deg, hsl(var(--team-b)) 0%, hsl(var(--team-b-light)) 100%);
     
     /* Shadows */
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-team: 0 4px 20px -4px hsl(var(--primary) / 0.3);
+    --shadow-lg: 0 24px 42px -28px hsl(216 33% 20% / 0.38);
+    --shadow-team: 0 18px 28px -24px hsl(var(--primary) / 0.6);
 
-    --radius: 0.5rem;
+    --radius: 0.9rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -80,47 +82,47 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 218 46% 10%;
+    --foreground: 210 30% 96%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 218 38% 12%;
+    --card-foreground: 210 30% 96%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 218 38% 12%;
+    --popover-foreground: 210 30% 96%;
 
-    --primary: 142 76% 36%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 166 70% 43%;
+    --primary-foreground: 210 30% 96%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 216 26% 19%;
+    --secondary-foreground: 210 30% 96%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 216 26% 19%;
+    --muted-foreground: 214 16% 68%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 28 93% 54%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 67% 48%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 216 23% 23%;
+    --input: 216 23% 23%;
+    --ring: 166 70% 43%;
 
     /* Dark mode team colors */
-    --team-a: 142 76% 36%;
+    --team-a: 166 70% 43%;
     --team-a-foreground: 0 0% 100%;
-    --team-a-light: 142 76% 46%;
+    --team-a-light: 166 74% 51%;
     
-    --team-b: 24 95% 53%;
+    --team-b: 28 93% 56%;
     --team-b-foreground: 0 0% 100%;
     --team-b-light: 24 95% 63%;
 
-    --success: 142 76% 36%;
+    --success: 166 70% 43%;
     --success-foreground: 0 0% 100%;
     
-    --warning: 45 93% 47%;
+    --warning: 40 96% 50%;
     --warning-foreground: 0 0% 100%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
@@ -138,7 +140,36 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: "Manrope", "Segoe UI", "Helvetica Neue", sans-serif;
+    background-image:
+      radial-gradient(circle at 3% -8%, hsl(var(--primary) / 0.2), transparent 40%),
+      radial-gradient(circle at 98% 8%, hsl(var(--team-b) / 0.18), transparent 38%),
+      linear-gradient(180deg, hsl(var(--background)), hsl(203 38% 95%));
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .surface-card {
+    @apply rounded-2xl border border-white/45 bg-card/90 shadow-lg backdrop-blur-md;
+  }
+
+  .subtle-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground;
+  }
+
+  .hero-glow {
+    background:
+      radial-gradient(circle at 8% 0%, hsl(var(--team-a) / 0.28), transparent 36%),
+      radial-gradient(circle at 95% 5%, hsl(var(--team-b) / 0.25), transparent 34%),
+      hsl(var(--card) / 0.8);
   }
 }

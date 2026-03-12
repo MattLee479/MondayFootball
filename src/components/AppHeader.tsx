@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { LogOut, Shield, Trophy } from 'lucide-react';
 import { toast } from 'sonner';
 import type { User } from '@supabase/supabase-js';
 
@@ -33,16 +33,23 @@ export default function AppHeader() {
   };
 
   return (
-    <div className="border-b bg-card">
-      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Monday Night Football</h1>
-          {user && (
-            <p className="text-sm text-muted-foreground">{user.email}</p>
-          )}
+    <div className="sticky top-0 z-40 border-b border-white/40 bg-background/80 backdrop-blur-xl">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary text-white shadow-team">
+            <Trophy className="h-4 w-4" />
+          </div>
+          <div>
+            <p className="text-sm font-bold leading-none">Monday Night Football</p>
+            {user && (
+              <p className="text-xs text-muted-foreground">{user.email}</p>
+            )}
+          </div>
         </div>
-        <Button variant="outline" onClick={handleLogout}>
-          <LogOut className="h-4 w-4 mr-2" />
+
+        <Button variant="outline" onClick={handleLogout} className="gap-2">
+          <Shield className="h-4 w-4" />
+          <LogOut className="h-4 w-4" />
           Logout
         </Button>
       </div>
